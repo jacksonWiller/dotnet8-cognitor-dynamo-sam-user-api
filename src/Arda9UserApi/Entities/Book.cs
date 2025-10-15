@@ -6,7 +6,7 @@ namespace Arda9UserApi.Entities;
 /// Map the Book Class to DynamoDb Table
 /// To learn more visit https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DeclarativeTagsList.html
 /// </summary>
-[DynamoDBTable("testeDotnetDeployBookCatalog")]
+[DynamoDBTable("arda-user-v1")]
 public class Book
 {
     ///<summary>

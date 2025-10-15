@@ -5,8 +5,8 @@
     "dotnet lambda help",
     "All the command line options for the Lambda command can be specified in this file."
   ],
-  "profile": "",
-  "region": "",
+  "profile": "curso_aws",
+  "region": "us-east-1",
   "configuration": "Release",
   "s3-prefix": "arda9-user-api-v1/",
   "template": "serverless.template",
