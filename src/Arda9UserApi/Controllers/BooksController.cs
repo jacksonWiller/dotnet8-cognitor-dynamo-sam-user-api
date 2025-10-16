@@ -1,13 +1,15 @@
 using Amazon.DynamoDBv2.DataModel;
-using Microsoft.AspNetCore.Mvc;
 using Arda9UserApi.Entities;
 using Arda9UserApi.Repositories;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
 namespace Arda9UserApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 [Produces("application/json")]
 public class BooksController : ControllerBase
 {

@@ -14,12 +14,18 @@
 
   <ItemGroup>
     <PackageReference Include="Amazon.Lambda.AspNetCoreServer.Hosting" Version="1.0.0" />
+    <PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="3.7.103.27" />
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.3.7" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="ServerlessAPI.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>
