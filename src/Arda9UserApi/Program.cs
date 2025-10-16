@@ -2,6 +2,11 @@ using Amazon;
 using Amazon.CognitoIdentityProvider;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.SecretsManager;
+using Arda9UserApi.Configuration;
+using Arda9UserApi.Core.CQRS;
+using Arda9UserApi.Features.Books.Commands;
+using Arda9UserApi.Features.Books.Queries;
 using Arda9UserApi.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +19,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging
         .ClearProviders()
         .AddJsonConsole();
+
+// Configurar as opções do AWS Cognito
+builder.Services.Configure<AwsCognitoConfig>(
+    builder.Configuration.GetSection("AwsCognito"));
+
+// Obter configuração do Cognito para usar na autenticação JWT
+var cognitoConfig = builder.Configuration.GetSection("AwsCognito").Get<AwsCognitoConfig>();
+var userPoolId = cognitoConfig?.UserPoolId ?? "us-east-1_tg7PHhZle";
+var region = cognitoConfig?.Region ?? "us-east-1";
  
 // Add services to the container.
 builder.Services
@@ -24,9 +38,6 @@ builder.Services
         });
 
 // Configuração da autenticação JWT com AWS Cognito
-var userPoolId = "us-east-1_tg7PHhZle";
-var region = "us-east-1";
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -45,6 +56,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// Add Custom CQRS
+builder.Services.AddScoped<IMediator, Mediator>();
+
+// Register Command Handlers
+builder.Services.AddScoped<ICommandHandler<CreateBookCommand, CreateBookResponse>, CreateBookCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<UpdateBookCommand, UpdateBookResponse>, UpdateBookCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<DeleteBookCommand, DeleteBookResponse>, DeleteBookCommandHandler>();
+
+// Register Query Handlers
+builder.Services.AddScoped<IQueryHandler<GetBooksQuery, GetBooksResponse>, GetBooksQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<GetBookByIdQuery, GetBookByIdResponse>, GetBookByIdQueryHandler>();
+
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -52,7 +75,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { 
         Title = "Books API", 
         Version = "v1",
-        Description = "API para gerenciamento de livros usando AWS Lambda e DynamoDB"
+        Description = "API para gerenciamento de livros usando AWS Lambda e DynamoDB com CQRS customizado"
     });
 
     // Configuração para autenticação JWT no Swagger
@@ -85,6 +108,7 @@ string awsRegion = Environment.GetEnvironmentVariable("AWS_REGION") ?? RegionEnd
 builder.Services
         .AddSingleton<IAmazonDynamoDB>(new AmazonDynamoDBClient(RegionEndpoint.GetBySystemName(awsRegion)))
         .AddSingleton<IAmazonCognitoIdentityProvider>(new AmazonCognitoIdentityProviderClient(RegionEndpoint.GetBySystemName(awsRegion)))
+        .AddSingleton<IAmazonSecretsManager>(new AmazonSecretsManagerClient(RegionEndpoint.GetBySystemName(awsRegion)))
         .AddScoped<IDynamoDBContext, DynamoDBContext>()
         .AddScoped<IBookRepository, BookRepository>();
 

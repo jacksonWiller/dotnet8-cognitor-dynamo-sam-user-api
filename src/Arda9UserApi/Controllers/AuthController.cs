@@ -1,9 +1,10 @@
 using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
-using Amazon.Runtime.Internal;
+using Amazon.SecretsManager;
+using Arda9UserApi.Configuration;
 using Arda9UserApi.Entities;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -15,48 +16,36 @@ namespace ServerlessAPI.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAmazonCognitoIdentityProvider cognitoClient;
+    private readonly AwsCognitoConfig cognitoConfig;
 
     public AuthController(
-        IAmazonCognitoIdentityProvider cognitoClient
+        IAmazonCognitoIdentityProvider cognitoClient,
+        IAmazonSecretsManager secretsManager,
+        IOptions<AwsCognitoConfig> cognitoConfig
         )
     {
         this.cognitoClient = cognitoClient;
+        this.cognitoConfig = cognitoConfig.Value;
     }
 
-
-    //"Region": "us-east-1",
-    //"UserPoolId": "us-east-1_sWDh0AKxR",
-    //"ClientId": "3q9eboqr11p66tt34mb9724jrh",
-    //"ClientSecret": "1srh7dgqnilo65jc0f8vhngp738fh7ng6rccv2pqhql43otdecs1",
-    //"Domain": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_t1kEvBnO3",
-    //"RedirectUri": "https://d84l1y8p4kdic.cloudfront.net"
-
-
-    //    {
-    //  "email": "emanuelly_nair_melo@gmail.com",
-    //  "password": "IS1N9ZkfF1@",
-    //  "firstName": "Emanuelly",
-    //  "lastName": "Nair Mariana Melo",
-    //  "phoneNumber": "+5538991860532"
-    //}
-
     /// <summary>
-    /// Obtém uma lista de livros com limite especificado
+    /// Realiza login do usuário no AWS Cognito
     /// </summary>
-    /// <param name="limit">Número máximo de livros a retornar (1-100)</param>
-    /// <returns>Lista de livros</returns>
-    /// <response code="200">Retorna a lista de livros</response>
-    /// <response code="400">Se o limite estiver fora do intervalo válido</response>
+    /// <returns>Token de autenticação</returns>
+    /// <response code="200">Login realizado com sucesso</response>
+    /// <response code="400">Parâmetros inválidos</response>
+    /// <response code="401">Credenciais inválidas</response>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Book>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> LoginAsync()
     {
         try
         {
-            var userPoolId = "us-east-1_tg7PHhZle";
-            var clientId = "6gdd4f0r9k274c4ilann8k5jm7"; // Corrigido para usar o ClientId dos comentários
-            var clientSecret = "9a131vl8cmfo5ovins06c3245fnjmcej81m72dpre5cvlva6477";
+            var userPoolId = cognitoConfig.UserPoolId;
+            var clientId = cognitoConfig.ClientId;
+            var clientSecret = cognitoConfig.ClientSecret;
 
             if (string.IsNullOrEmpty(userPoolId) || string.IsNullOrEmpty(clientId))
             {
@@ -122,5 +111,4 @@ public class AuthController : ControllerBase
         var hash = hmac.ComputeHash(messageBytes);
         return Convert.ToBase64String(hash);
     }
-
 }

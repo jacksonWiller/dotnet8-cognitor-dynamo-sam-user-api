@@ -1,6 +1,7 @@
-using Amazon.DynamoDBv2.DataModel;
+using Arda9UserApi.Core.CQRS;
 using Arda9UserApi.Entities;
-using Arda9UserApi.Repositories;
+using Arda9UserApi.Features.Books.Commands;
+using Arda9UserApi.Features.Books.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -13,13 +14,13 @@ namespace Arda9UserApi.Controllers;
 [Produces("application/json")]
 public class BooksController : ControllerBase
 {
-    private readonly ILogger<BooksController> logger;
-    private readonly IBookRepository bookRepository;
+    private readonly ILogger<BooksController> _logger;
+    private readonly IMediator _mediator;
 
-    public BooksController(ILogger<BooksController> logger, IBookRepository bookRepository)
+    public BooksController(ILogger<BooksController> logger, IMediator mediator)
     {
-        this.logger = logger;
-        this.bookRepository = bookRepository;
+        _logger = logger;
+        _mediator = mediator;
     }
 
     /// <summary>
@@ -34,9 +35,15 @@ public class BooksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<Book>>> Get([FromQuery][Range(1, 100)] int limit = 10)
     {
-        if (limit <= 0 || limit > 100) return BadRequest("The limit should been between [1-100]");
+        var query = new GetBooksQuery(limit);
+        var response = await _mediator.SendAsync(query);
 
-        return Ok(await bookRepository.GetBooksAsync(limit));
+        if (!response.Success)
+        {
+            return BadRequest(response.ErrorMessage);
+        }
+
+        return Ok(response.Books);
     }
 
     /// <summary>
@@ -51,14 +58,19 @@ public class BooksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Book>> Get(Guid id)
     {
-        var result = await bookRepository.GetByIdAsync(id);
+        var query = new GetBookByIdQuery(id);
+        var response = await _mediator.SendAsync(query);
 
-        if (result == null)
+        if (!response.Success)
         {
-            return NotFound();
+            if (response.NotFound)
+            {
+                return NotFound();
+            }
+            return BadRequest(response.ErrorMessage);
         }
 
-        return Ok(result);
+        return Ok(response.Book);
     }
 
     /// <summary>
@@ -73,21 +85,18 @@ public class BooksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<Book>> Post([FromBody] Book book)
     {
-        if (book == null) return ValidationProblem("Invalid input! Book not informed");
+        var command = new CreateBookCommand(book);
+        var response = await _mediator.SendAsync(command);
 
-        var result = await bookRepository.CreateAsync(book);
+        if (!response.Success)
+        {
+            return BadRequest(response.ErrorMessage);
+        }
 
-        if (result)
-        {
-            return CreatedAtAction(
-                nameof(Get),
-                new { id = book.Id },
-                book);
-        }
-        else
-        {
-            return BadRequest("Fail to persist");
-        }
+        return CreatedAtAction(
+            nameof(Get),
+            new { id = response.Book!.Id },
+            response.Book);
     }
 
     /// <summary>
@@ -105,20 +114,18 @@ public class BooksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Put(Guid id, [FromBody] Book book)
     {
-        if (id == Guid.Empty || book == null) return ValidationProblem("Invalid request payload");
+        var command = new UpdateBookCommand(id, book);
+        var response = await _mediator.SendAsync(command);
 
-        // Retrieve the book.
-        var bookRetrieved = await bookRepository.GetByIdAsync(id);
-
-        if (bookRetrieved == null)
+        if (!response.Success)
         {
-            var errorMsg = $"Invalid input! No book found with id:{id}";
-            return NotFound(errorMsg);
+            if (response.ErrorMessage?.Contains("No book found") == true)
+            {
+                return NotFound(response.ErrorMessage);
+            }
+            return BadRequest(response.ErrorMessage);
         }
 
-        book.Id = bookRetrieved.Id;
-
-        await bookRepository.UpdateAsync(book);
         return Ok();
     }
 
@@ -136,17 +143,18 @@ public class BooksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        if (id == Guid.Empty) return ValidationProblem("Invalid request payload");
+        var command = new DeleteBookCommand(id);
+        var response = await _mediator.SendAsync(command);
 
-        var bookRetrieved = await bookRepository.GetByIdAsync(id);
-
-        if (bookRetrieved == null)
+        if (!response.Success)
         {
-            var errorMsg = $"Invalid input! No book found with id:{id}";
-            return NotFound(errorMsg);
+            if (response.ErrorMessage?.Contains("No book found") == true)
+            {
+                return NotFound(response.ErrorMessage);
+            }
+            return BadRequest(response.ErrorMessage);
         }
 
-        await bookRepository.DeleteAsync(bookRetrieved);
         return Ok();
     }
 }
