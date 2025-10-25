@@ -4,12 +4,13 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.SecretsManager;
 using Arda9UserApi.Configuration;
-using Arda9UserApi.Core.CQRS;
-using Arda9UserApi.Features.Books.Commands;
-using Arda9UserApi.Features.Books.Queries;
+using Arda9UserApi.Core.Behaviors;
 using Arda9UserApi.Repositories;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 using System.Text.Json;
 
 
@@ -56,17 +57,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Add Custom CQRS
-builder.Services.AddScoped<IMediator, Mediator>();
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
 
-// Register Command Handlers
-builder.Services.AddScoped<ICommandHandler<CreateBookCommand, CreateBookResponse>, CreateBookCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<UpdateBookCommand, UpdateBookResponse>, UpdateBookCommandHandler>();
-builder.Services.AddScoped<ICommandHandler<DeleteBookCommand, DeleteBookResponse>, DeleteBookCommandHandler>();
+    // Adicionar behaviors (opcional)
+    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+});
 
-// Register Query Handlers
-builder.Services.AddScoped<IQueryHandler<GetBooksQuery, GetBooksResponse>, GetBooksQueryHandler>();
-builder.Services.AddScoped<IQueryHandler<GetBookByIdQuery, GetBookByIdResponse>, GetBookByIdQueryHandler>();
+builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
@@ -116,6 +116,8 @@ builder.Services
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 
 var app = builder.Build();
+
+
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
