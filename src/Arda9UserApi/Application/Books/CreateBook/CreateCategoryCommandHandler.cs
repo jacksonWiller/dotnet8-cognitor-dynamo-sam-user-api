@@ -1,7 +1,9 @@
-using Arda9UserApi.Entities;
-using Arda9UserApi.Repositories;
+using Arda9UserApi.Application.DTOs;
+using Arda9UserApi.Infrastructure.Repositories;
 using Ardalis.Result;
 using Ardalis.Result.FluentValidation;
+using AutoMapper;
+using Catalog.Domain.Entities.BookAggregate;
 using FluentValidation;
 using MediatR;
 
@@ -11,17 +13,17 @@ public class CreateBookCommandHandler : IRequestHandler<CreateBookCommand, Resul
 {
     private readonly IValidator<CreateBookCommand> _validator;
     private readonly IBookRepository _bookRepository;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IMapper _mapper;
 
     public CreateBookCommandHandler(
         IValidator<CreateBookCommand> validator,
         IBookRepository bookRepository,
-        IHttpContextAccessor httpContextAccessor
+        IMapper mapper
     )
     {
         _validator = validator;
         _bookRepository = bookRepository;
-        _httpContextAccessor = httpContextAccessor;
+        _mapper = mapper;
     }
 
     public async Task<Result<CreateBookResponse>> Handle(CreateBookCommand request, CancellationToken cancellationToken)
@@ -32,23 +34,27 @@ public class CreateBookCommandHandler : IRequestHandler<CreateBookCommand, Resul
             return Result<CreateBookResponse>.Invalid(validationResult.AsErrors());
         }
 
-        var book = new Book
-        {
-            Title = request.Title,
-            ISBN = request.ISBN,
-            Authors = request.Authors
-        };
+        // Cria a entidade de domínio Book
+        var book = new Book(
+            name: request.Name,
+            description: request.Description,
+            price: request.Price,
+            stockQuantity: request.StockQuantity,
+            sku: request.SKU,
+            brand: request.Brand
+        );
+
+        // TODO: Se CategoryIds foram fornecidos, buscar as categorias e adicionar ao book
+        // Por enquanto, o book será criado sem categorias
 
         await _bookRepository.CreateAsync(book);
 
+        var bookDto = _mapper.Map<BookDto>(book);
         var response = new CreateBookResponse
         {
-            Id = book.Id,
-            Title = book.Title,
-            ISBN = book.ISBN,
-            Authors = book.Authors
+            Book = bookDto
         };
 
-        return Result<CreateBookResponse>.Success(response, "Product created successfully.");
+        return Result<CreateBookResponse>.Success(response, "Book created successfully.");
     }
 }

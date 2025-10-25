@@ -1,7 +1,7 @@
 using System;
 using MediatR;
 
-namespace Catalog.Core.SharedKernel;
+namespace Arda9UserApi.Core;
 
 /// <summary>
 /// Represents a base event.

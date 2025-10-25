@@ -1,6 +1,8 @@
-using Arda9UserApi.Repositories;
+using Arda9UserApi.Application.DTOs;
+using Arda9UserApi.Infrastructure.Repositories;
 using Ardalis.Result;
 using Ardalis.Result.FluentValidation;
+using AutoMapper;
 using FluentValidation;
 using MediatR;
 
@@ -10,14 +12,17 @@ public class UpdateBookCommandHandler : IRequestHandler<UpdateBookCommand, Resul
 {
     private readonly IValidator<UpdateBookCommand> _validator;
     private readonly IBookRepository _bookRepository;
+    private readonly IMapper _mapper;
 
     public UpdateBookCommandHandler(
         IValidator<UpdateBookCommand> validator,
-        IBookRepository bookRepository
+        IBookRepository bookRepository,
+        IMapper mapper
     )
     {
         _validator = validator;
         _bookRepository = bookRepository;
+        _mapper = mapper;
     }
 
     public async Task<Result<UpdateBookResponse>> Handle(UpdateBookCommand request, CancellationToken cancellationToken)
@@ -34,21 +39,17 @@ public class UpdateBookCommandHandler : IRequestHandler<UpdateBookCommand, Resul
             return Result<UpdateBookResponse>.NotFound($"Book with Id {request.Id} not found");
         }
 
-        // Atualiza apenas os campos que foram fornecidos
-        if (request.Title != null)
-        {
-            existingBook.Title = request.Title;
-        }
+        // Atualiza o book usando o método Update da entidade de domínio
+        existingBook.Update(
+            name: request.Name ?? existingBook.Name,
+            description: request.Description ?? existingBook.Description,
+            price: request.Price ?? existingBook.Price,
+            stockQuantity: request.StockQuantity ?? existingBook.StockQuantity,
+            sku: request.SKU ?? existingBook.SKU,
+            brand: request.Brand ?? existingBook.Brand
+        );
 
-        if (request.ISBN != null)
-        {
-            existingBook.ISBN = request.ISBN;
-        }
-
-        if (request.Authors != null)
-        {
-            existingBook.Authors = request.Authors;
-        }
+        // TODO: Se CategoryIds foram fornecidos, atualizar as categorias
 
         var updateSuccess = await _bookRepository.UpdateAsync(existingBook);
         if (!updateSuccess)
@@ -56,12 +57,10 @@ public class UpdateBookCommandHandler : IRequestHandler<UpdateBookCommand, Resul
             return Result<UpdateBookResponse>.Error();
         }
 
+        var bookDto = _mapper.Map<BookDto>(existingBook);
         var response = new UpdateBookResponse
         {
-            Id = existingBook.Id,
-            Title = existingBook.Title,
-            ISBN = existingBook.ISBN,
-            Authors = existingBook.Authors
+            Book = bookDto
         };
 
         return Result<UpdateBookResponse>.Success(response, "Book updated successfully.");

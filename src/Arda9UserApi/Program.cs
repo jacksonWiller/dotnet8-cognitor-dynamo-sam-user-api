@@ -5,7 +5,7 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.SecretsManager;
 using Arda9UserApi.Configuration;
 using Arda9UserApi.Core.Behaviors;
-using Arda9UserApi.Repositories;
+using Arda9UserApi.Infrastructure.Repositories;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,11 +24,11 @@ builder.Logging
         .ClearProviders()
         .AddJsonConsole();
 
-// Configurar as opções do AWS Cognito
+// Configurar as opï¿½ï¿½es do AWS Cognito
 builder.Services.Configure<AwsCognitoConfig>(
     builder.Configuration.GetSection("AwsCognito"));
 
-// Obter configuração do Cognito para usar na autenticação JWT
+// Obter configuraï¿½ï¿½o do Cognito para usar na autenticaï¿½ï¿½o JWT
 var cognitoConfig = builder.Configuration.GetSection("AwsCognito").Get<AwsCognitoConfig>();
 var userPoolId = cognitoConfig?.UserPoolId ?? "us-east-1_tg7PHhZle";
 var region = cognitoConfig?.Region ?? "us-east-1";
@@ -41,7 +41,7 @@ builder.Services
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         });
 
-// Configuração da autenticação JWT com AWS Cognito
+// Configuraï¿½ï¿½o da autenticaï¿½ï¿½o JWT com AWS Cognito
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -50,7 +50,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuer = true,
             ValidIssuer = $"https://cognito-idp.{region}.amazonaws.com/{userPoolId}",
-            ValidateAudience = false, // Cognito não usa audience padrão
+            ValidateAudience = false, // Cognito nï¿½o usa audience padrï¿½o
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.Zero
@@ -70,6 +70,8 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
+// Configurar AutoMapper
+builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
@@ -81,7 +83,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API para gerenciamento de livros usando AWS Lambda e DynamoDB com CQRS customizado"
     });
 
-    // Configuração para autenticação JWT no Swagger
+    // Configuraï¿½ï¿½o para autenticaï¿½ï¿½o JWT no Swagger
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -129,7 +131,7 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 
-// Adicionar middleware de autenticação e autorização
+// Adicionar middleware de autenticaï¿½ï¿½o e autorizaï¿½ï¿½o
 app.UseAuthentication();
 app.UseAuthorization();
 

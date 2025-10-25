@@ -1,45 +1,47 @@
-using Ardalis.Result;
-using Catalog.Core;
+using System.Text.RegularExpressions;
 
 namespace Catalog.Domain.ValueObjects;
 
-public sealed record Email
+/// <summary>
+/// Value Object for Email: RFC 5322 format, lowercase, trimmed
+/// </summary>
+public class Email
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Email"/> class.
-    /// </summary>
-    /// <param name="address">The email address.</param>
-    private Email(string address) =>
-        Address = address.ToLowerInvariant().Trim();
+    private static readonly Regex EmailRegex = new(
+        @"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase
+    );
 
-    /// <summary>
-    /// Default constructor for EF/ORM.
-    /// </summary>
-    public Email() { }
+    public string Value { get; private set; }
 
-    /// <summary>
-    /// Gets the email address.
-    /// </summary>
-    public string Address { get; }
-
-    /// <summary>
-    /// Creates a new <see cref="Email"/> instance.
-    /// </summary>
-    /// <param name="emailAddress">The email address to create.</param>
-    /// <returns>A <see cref="Result{T}"/> with the created <see cref="Email"/> if successful, or an error message if not.</returns>
-    public static Result<Email> Create(string emailAddress)
+    public Email(string value)
     {
-        if (string.IsNullOrWhiteSpace(emailAddress))
-            return Result<Email>.Error("The e-mail address must be provided.");
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException("Email cannot be empty");
 
-        return !RegexPatterns.EmailIsValid.IsMatch(emailAddress)
-            ? Result<Email>.Error("The e-mail address is invalid.")
-            : Result<Email>.Success(new Email(emailAddress));
+        var normalized = value.Trim().ToLowerInvariant();
+
+        if (!EmailRegex.IsMatch(normalized))
+            throw new ArgumentException("Invalid email format");
+
+        if (normalized.Length > 254) // RFC 5321
+            throw new ArgumentException("Email cannot exceed 254 characters");
+
+        Value = normalized;
     }
 
-    /// <summary>
-    /// Returns a string that represents the current <see cref="Email"/> object.
-    /// </summary>
-    /// <returns>A string that represents the current <see cref="Email"/> object.</returns>
-    public override string ToString() => Address;
+    public string GetDomain()
+    {
+        var atIndex = Value.IndexOf('@');
+        return atIndex >= 0 ? Value.Substring(atIndex + 1) : string.Empty;
+    }
+
+    public override string ToString() => Value;
+
+    public override bool Equals(object? obj)
+    {
+        return obj is Email other && Value == other.Value;
+    }
+
+    public override int GetHashCode() => Value.GetHashCode();
 }

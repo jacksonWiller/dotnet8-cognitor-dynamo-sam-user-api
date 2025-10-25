@@ -2,7 +2,6 @@ using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Amazon.SecretsManager;
 using Arda9UserApi.Configuration;
-using Arda9UserApi.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
@@ -29,12 +28,12 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Realiza login do usuário no AWS Cognito
+    /// Realiza login do usuï¿½rio no AWS Cognito
     /// </summary>
-    /// <returns>Token de autenticação</returns>
+    /// <returns>Token de autenticaï¿½ï¿½o</returns>
     /// <response code="200">Login realizado com sucesso</response>
-    /// <response code="400">Parâmetros inválidos</response>
-    /// <response code="401">Credenciais inválidas</response>
+    /// <response code="400">Parï¿½metros invï¿½lidos</response>
+    /// <response code="401">Credenciais invï¿½lidas</response>
     [HttpGet]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -49,16 +48,16 @@ public class AuthController : ControllerBase
 
             if (string.IsNullOrEmpty(userPoolId) || string.IsNullOrEmpty(clientId))
             {
-                throw new InvalidOperationException("Configurações do Cognito não encontradas");
+                throw new InvalidOperationException("Configuraï¿½ï¿½es do Cognito nï¿½o encontradas");
             }
 
             var email = "jacksonwillerduarte@gmail.com";
             var senha = "Abc@1234566";
 
-            // Use os parâmetros recebidos
+            // Use os parï¿½metros recebidos
             var secretHash = ComputeSecretHash(email, clientId, clientSecret);
 
-            // Para usuários não-admin, use InitiateAuthRequest
+            // Para usuï¿½rios nï¿½o-admin, use InitiateAuthRequest
             var authRequest = new InitiateAuthRequest
             {
                 ClientId = clientId,
@@ -89,11 +88,11 @@ public class AuthController : ControllerBase
         }
         catch (UserNotConfirmedException)
         {
-            return BadRequest(new { Success = false, Message = "Usuário não confirmado. Verifique seu email." });
+            return BadRequest(new { Success = false, Message = "Usuï¿½rio nï¿½o confirmado. Verifique seu email." });
         }
         catch (InvalidParameterException ex)
         {
-            return BadRequest(new { Success = false, Message = "Parâmetros inválidos", Error = ex.Message });
+            return BadRequest(new { Success = false, Message = "Parï¿½metros invï¿½lidos", Error = ex.Message });
         }
         catch (Exception ex)
         {

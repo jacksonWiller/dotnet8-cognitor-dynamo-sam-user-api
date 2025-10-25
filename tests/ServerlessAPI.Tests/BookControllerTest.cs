@@ -1,5 +1,5 @@
 ﻿using Arda9UserApi.Entities;
-using Arda9UserApi.Repositories;
+using Arda9UserApi.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;

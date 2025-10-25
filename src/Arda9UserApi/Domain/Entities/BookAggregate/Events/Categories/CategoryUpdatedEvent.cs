@@ -1,4 +1,4 @@
-using Catalog.Core.SharedKernel;
+using Arda9UserApi.Core;
 
 namespace Catalog.Domain.Entities.BookAggregate.Events.Categories;
 

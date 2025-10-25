@@ -1,8 +1,8 @@
-using Arda9UserApi.Entities;
+using Arda9UserApi.Application.DTOs;
 
 namespace Arda9UserApi.Application.Books.GetBookById;
 
 public class GetBookByIdQueryResponse
 {
-    public Book? Book { get; set; }
+    public BookDto? Book { get; set; }
 }

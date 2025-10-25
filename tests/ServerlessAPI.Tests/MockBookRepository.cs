@@ -1,10 +1,10 @@
 ﻿using Bogus;
 using Arda9UserApi.Entities;
-using Arda9UserApi.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Arda9UserApi.Infrastructure.Repositories;
 
 namespace Arda9UserApi.Tests;
 

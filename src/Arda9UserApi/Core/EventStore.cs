@@ -1,3 +1,4 @@
+using Arda9UserApi.Core;
 using System;
 
 namespace Catalog.Core.SharedKernel;
