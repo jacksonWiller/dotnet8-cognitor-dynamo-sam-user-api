@@ -16,6 +16,9 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//Adiciona suporte ao HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
 //Logger
 builder.Logging
         .ClearProviders()
@@ -116,8 +119,6 @@ builder.Services
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 
 var app = builder.Build();
-
-
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
