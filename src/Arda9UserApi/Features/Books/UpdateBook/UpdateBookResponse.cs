@@ -1,6 +1,6 @@
-namespace Arda9UserApi.Features.Books.CreateBook;
+namespace Arda9UserApi.Features.Books.UpdateBook;
 
-public class CreateBookResponse 
+public class UpdateBookResponse 
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
