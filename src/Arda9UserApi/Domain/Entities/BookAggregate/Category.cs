@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using Catalog.Core.SharedKernel;
+using Arda9UserApi.Core;
 using Catalog.Domain.Entities.BookAggregate.Events.Categories;
 
 namespace Catalog.Domain.Entities.BookAggregate;

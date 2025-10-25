@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Arda9UserApi.Core;
 using Catalog.Core.SharedKernel;
 using Catalog.Domain.Entities.BookAggregate.Events.Books;
 using Catalog.Domain.ValueObjects;
