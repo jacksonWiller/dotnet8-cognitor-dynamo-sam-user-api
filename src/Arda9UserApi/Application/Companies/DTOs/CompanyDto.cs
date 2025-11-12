@@ -10,14 +10,8 @@ namespace Arda9UserApi.Application.DTOs;
 [DynamoDBTable("arda-user-v1")]
 public class CompanyDto
 {
-    [DynamoDBHashKey("PK")]
-    public string PK { get; set; } = string.Empty; // COMPANY#<companyId>
-
-    [DynamoDBRangeKey("SK")]
-    public string SK { get; set; } = "METADATA"; // METADATA
-
-    [DynamoDBProperty]
-    public Guid CompanyId { get; set; }
+    [DynamoDBHashKey]
+    public Guid Id { get; set; }
 
     [DynamoDBProperty]
     public string Name { get; set; } = string.Empty;

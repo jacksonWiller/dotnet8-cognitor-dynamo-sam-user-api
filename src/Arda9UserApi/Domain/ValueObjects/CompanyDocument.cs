@@ -23,14 +23,14 @@ public class CompanyDocument
             throw new ArgumentException("Company document must contain only digits");
 
         // Validate by country
-        if (country.ToUpperInvariant() == "BR")
-        {
-            if (normalized.Length != 14)
-                throw new ArgumentException("CNPJ must have 14 digits");
+        //if (country.ToUpperInvariant() == "BR")
+        //{
+        //    if (normalized.Length != 14)
+        //        throw new ArgumentException("CNPJ must have 14 digits");
 
-            if (!ValidateCNPJ(normalized))
-                throw new ArgumentException("Invalid CNPJ checksum");
-        }
+        //    if (!ValidateCNPJ(normalized))
+        //        throw new ArgumentException("Invalid CNPJ checksum");
+        //}
 
         Value = normalized;
         Country = country.ToUpperInvariant();
