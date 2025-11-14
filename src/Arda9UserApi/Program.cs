@@ -114,12 +114,8 @@ builder.Services
         .AddSingleton<IAmazonDynamoDB>(new AmazonDynamoDBClient(RegionEndpoint.GetBySystemName(awsRegion)))
         .AddSingleton<IAmazonCognitoIdentityProvider>(new AmazonCognitoIdentityProviderClient(RegionEndpoint.GetBySystemName(awsRegion)))
         .AddSingleton<IAmazonSecretsManager>(new AmazonSecretsManagerClient(RegionEndpoint.GetBySystemName(awsRegion)))
-        //    .AddScoped<IDynamoDBContext>(sp => 
-        //new DynamoDBContext(sp.GetRequiredService<IAmazonDynamoDB>()))
         .AddScoped<IDynamoDBContext, DynamoDBContext>()
-        .AddScoped<IBookRepository, BookRepository>()
-        .AddScoped<ICompanyRepository, CompanyRepository>()
-        .AddScoped<IUserRepository, UserRepository>(); // <- ADICIONAR ESTA LINHA
+        .AddScoped<IUserRepository, UserRepository>();
 
 // Add AWS Lambda support
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);

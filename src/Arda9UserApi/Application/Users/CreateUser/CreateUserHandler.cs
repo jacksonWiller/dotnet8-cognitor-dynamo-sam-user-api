@@ -14,7 +14,6 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<Creat
 {
     private readonly IValidator<CreateUserCommand> _validator;
     private readonly IUserRepository _repository;
-    private readonly ICompanyRepository _companyRepository;
     private readonly IMapper _mapper;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<CreateUserHandler> _logger;
@@ -22,14 +21,12 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<Creat
     public CreateUserHandler(
         IValidator<CreateUserCommand> validator,
         IUserRepository repository,
-        ICompanyRepository companyRepository,
         IMapper mapper,
         IHttpContextAccessor httpContextAccessor,
         ILogger<CreateUserHandler> logger)
     {
         _validator = validator;
         _repository = repository;
-        _companyRepository = companyRepository;
         _mapper = mapper;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
