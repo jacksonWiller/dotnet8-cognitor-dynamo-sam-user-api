@@ -5,18 +5,11 @@ namespace Arda9UserApi.Application.DTOs;
 
 /// <summary>
 /// DTO for User with DynamoDB annotations
-/// PK: COMPANY#<companyId>, SK: USER#<userId>
 /// </summary>
 [DynamoDBTable("arda-user-v1")]
 public class UserDto
 {
-    [DynamoDBHashKey("PK")]
-    public string PK { get; set; } = string.Empty; // COMPANY#<companyId>
-
-    [DynamoDBRangeKey("SK")]
-    public string SK { get; set; } = string.Empty; // USER#<userId>
-
-    [DynamoDBProperty]
+    [DynamoDBHashKey]
     public Guid Id { get; set; }
 
     [DynamoDBProperty]
@@ -65,9 +58,14 @@ public class UserDto
     public Guid? UpdatedBy { get; set; }
 
     // GSI para buscar por email
-    [DynamoDBGlobalSecondaryIndexHashKey("GSI1PK", "EmailIndex")]
-    public string? GSI1PK { get; set; } // EMAIL#<email>
+    [DynamoDBGlobalSecondaryIndexHashKey("EmailIndex")]
+    public string GSI1PK { get; set; } = string.Empty; // EMAIL#<email>
 
-    [DynamoDBGlobalSecondaryIndexRangeKey("GSI1SK", "EmailIndex")]
-    public string? GSI1SK { get; set; } // USER#<userId>
+    // GSI para buscar por company
+    [DynamoDBGlobalSecondaryIndexHashKey("CompanyIndex")]
+    public string GSI2PK { get; set; } = string.Empty; // COMPANY#<companyId>
+
+    // GSI para buscar por CognitoSub
+    [DynamoDBGlobalSecondaryIndexHashKey("CognitoIndex")]
+    public string GSI3PK { get; set; } = string.Empty; // COGNITO#<cognitoSub>
 }

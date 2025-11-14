@@ -11,10 +11,10 @@ public class UserMappingProfile : Profile
     {
         // User -> UserDto
         CreateMap<User, UserDto>()
-            .ForMember(dest => dest.PK, opt => opt.Ignore())
-            .ForMember(dest => dest.SK, opt => opt.Ignore())
-            .ForMember(dest => dest.GSI1PK, opt => opt.Ignore())
-            .ForMember(dest => dest.GSI1SK, opt => opt.Ignore())
+            //.ForMember(dest => dest.PK, opt => opt.Ignore())
+            //.ForMember(dest => dest.SK, opt => opt.Ignore())
+            //.ForMember(dest => dest.GSI1PK, opt => opt.Ignore())
+            //.ForMember(dest => dest.GSI1SK, opt => opt.Ignore())
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name.Value))
             .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Phone != null 

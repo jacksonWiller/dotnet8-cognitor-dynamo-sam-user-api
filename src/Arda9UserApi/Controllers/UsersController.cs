@@ -13,7 +13,7 @@ namespace Arda9UserApi.Controllers;
 
 [Route("api/companies/{companyId}/[controller]")]
 [ApiController]
-[Authorize]
+//[Authorize]
 [Produces("application/json")]
 public class UsersController : ControllerBase
 {

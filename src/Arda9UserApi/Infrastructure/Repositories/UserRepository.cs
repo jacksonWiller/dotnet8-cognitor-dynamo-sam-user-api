@@ -24,10 +24,14 @@ public class UserRepository : IUserRepository
         try
         {
             var userDto = mapper.Map<UserDto>(user);
-            userDto.PK = $"COMPANY#{user.CompanyId}";
-            userDto.SK = $"USER#{user.Id}";
             userDto.GSI1PK = $"EMAIL#{user.Email.Value.ToLowerInvariant()}";
-            userDto.GSI1SK = $"USER#{user.Id}";
+            userDto.GSI2PK = $"COMPANY#{user.CompanyId}";
+            
+            if (!string.IsNullOrEmpty(user.CognitoSub))
+            {
+                userDto.GSI3PK = $"COGNITO#{user.CognitoSub}";
+            }
+
             userDto.CreatedAt = DateTime.UtcNow;
             userDto.UpdatedAt = DateTime.UtcNow;
 
@@ -48,10 +52,7 @@ public class UserRepository : IUserRepository
         bool result;
         try
         {
-            var pk = $"COMPANY#{user.CompanyId}";
-            var sk = $"USER#{user.Id}";
-
-            await context.DeleteAsync<UserDto>(pk, sk);
+            await context.DeleteAsync<UserDto>(user.Id);
             result = true;
         }
         catch (Exception ex)
@@ -72,10 +73,14 @@ public class UserRepository : IUserRepository
         try
         {
             var userDto = mapper.Map<UserDto>(user);
-            userDto.PK = $"COMPANY#{user.CompanyId}";
-            userDto.SK = $"USER#{user.Id}";
             userDto.GSI1PK = $"EMAIL#{user.Email.Value.ToLowerInvariant()}";
-            userDto.GSI1SK = $"USER#{user.Id}";
+            userDto.GSI2PK = $"COMPANY#{user.CompanyId}";
+            
+            if (!string.IsNullOrEmpty(user.CognitoSub))
+            {
+                userDto.GSI3PK = $"COGNITO#{user.CognitoSub}";
+            }
+
             userDto.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveAsync(userDto);
@@ -94,12 +99,16 @@ public class UserRepository : IUserRepository
     {
         try
         {
-            var pk = $"COMPANY#{companyId}";
-            var sk = $"USER#{userId}";
-
-            var userDto = await context.LoadAsync<UserDto>(pk, sk);
+            var userDto = await context.LoadAsync<UserDto>(userId);
 
             if (userDto == null) return null;
+
+            // Validar se o usuário pertence à company solicitada
+            if (userDto.CompanyId != companyId)
+            {
+                logger.LogWarning("User {UserId} does not belong to company {CompanyId}", userId, companyId);
+                return null;
+            }
 
             return mapper.Map<User>(userDto);
         }
@@ -147,18 +156,22 @@ public class UserRepository : IUserRepository
     {
         try
         {
-            var filter = new ScanFilter();
-            filter.AddCondition("CognitoSub", ScanOperator.Equal, cognitoSub);
-            filter.AddCondition("SK", ScanOperator.BeginsWith, "USER#");
-
-            var scanConfig = new ScanOperationConfig
+            var queryConfig = new QueryOperationConfig
             {
-                Limit = 1,
-                Filter = filter
+                IndexName = "CognitoIndex",
+                KeyExpression = new Expression
+                {
+                    ExpressionStatement = "GSI3PK = :cognitoSub",
+                    ExpressionAttributeValues = new Dictionary<string, DynamoDBEntry>
+                    {
+                        { ":cognitoSub", $"COGNITO#{cognitoSub}" }
+                    }
+                },
+                Limit = 1
             };
 
-            var queryResult = context.FromScanAsync<UserDto>(scanConfig);
-            var users = await queryResult.GetNextSetAsync();
+            var search = context.FromQueryAsync<UserDto>(queryConfig);
+            var users = await search.GetNextSetAsync();
             var userDto = users.FirstOrDefault();
 
             if (userDto == null) return null;
@@ -182,13 +195,13 @@ public class UserRepository : IUserRepository
 
             var queryConfig = new QueryOperationConfig
             {
+                IndexName = "CompanyIndex",
                 KeyExpression = new Expression
                 {
-                    ExpressionStatement = "PK = :pk AND begins_with(SK, :sk)",
+                    ExpressionStatement = "GSI2PK = :companyId",
                     ExpressionAttributeValues = new Dictionary<string, DynamoDBEntry>
                     {
-                        { ":pk", $"COMPANY#{companyId}" },
-                        { ":sk", "USER#" }
+                        { ":companyId", $"COMPANY#{companyId}" }
                     }
                 },
                 Limit = limit

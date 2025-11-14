@@ -46,13 +46,7 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<Creat
 
         try
         {
-            // Verificar se a company existe
-            var company = await _companyRepository.GetByIdAsync(request.CompanyId);
-            if (company == null)
-            {
-                return Result<CreateUserResponse>.NotFound($"Company with ID '{request.CompanyId}' not found.");
-            }
-
+           
             // Verificar se já existe um usuário com o mesmo email
             var existingUser = await _repository.GetByEmailAsync(request.Email);
             if (existingUser != null)
