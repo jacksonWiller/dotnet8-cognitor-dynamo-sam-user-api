@@ -154,13 +154,9 @@ public class CompanyRepository : ICompanyRepository
                 return result;
             }
 
-            var filter = new ScanFilter();
-            filter.AddCondition("SK", ScanOperator.Equal, "METADATA");
-
             var scanConfig = new ScanOperationConfig()
             {
-                Limit = limit,
-                Filter = filter
+                Limit = limit
             };
 
             var queryResult = context.FromScanAsync<CompanyDto>(scanConfig);

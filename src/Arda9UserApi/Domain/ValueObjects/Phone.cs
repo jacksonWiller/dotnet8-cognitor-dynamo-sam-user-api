@@ -23,8 +23,8 @@ public class Phone
 
         var fullNumber = $"{countryCode}{number}";
 
-        if (!E164Regex.IsMatch(fullNumber))
-            throw new ArgumentException("Phone must be in E.164 format (e.g., +5511999999999)");
+        //if (!E164Regex.IsMatch(fullNumber))
+        //    throw new ArgumentException("Phone must be in E.164 format (e.g., +5511999999999)");
 
         CountryCode = countryCode;
         Number = number;

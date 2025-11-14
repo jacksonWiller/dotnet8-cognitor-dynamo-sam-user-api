@@ -24,11 +24,11 @@ builder.Logging
         .ClearProviders()
         .AddJsonConsole();
 
-// Configurar as op��es do AWS Cognito
+// Configurar as opções do AWS Cognito
 builder.Services.Configure<AwsCognitoConfig>(
     builder.Configuration.GetSection("AwsCognito"));
 
-// Obter configura��o do Cognito para usar na autentica��o JWT
+// Obter configuração do Cognito para usar na autenticação JWT
 var cognitoConfig = builder.Configuration.GetSection("AwsCognito").Get<AwsCognitoConfig>();
 var userPoolId = cognitoConfig?.UserPoolId ?? "us-east-1_tg7PHhZle";
 var region = cognitoConfig?.Region ?? "us-east-1";
@@ -41,7 +41,7 @@ builder.Services
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         });
 
-// Configura��o da autentica��o JWT com AWS Cognito
+// Configuração da autenticação JWT com AWS Cognito
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -50,7 +50,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuer = true,
             ValidIssuer = $"https://cognito-idp.{region}.amazonaws.com/{userPoolId}",
-            ValidateAudience = false, // Cognito n�o usa audience padr�o
+            ValidateAudience = false, // Cognito não usa audience padrão
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.Zero
@@ -83,7 +83,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API para gerenciamento de livros usando AWS Lambda e DynamoDB com CQRS customizado"
     });
 
-    // Configura��o para autentica��o JWT no Swagger
+    // Configuração para autenticação JWT no Swagger
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -116,7 +116,8 @@ builder.Services
         .AddSingleton<IAmazonSecretsManager>(new AmazonSecretsManagerClient(RegionEndpoint.GetBySystemName(awsRegion)))
         .AddScoped<IDynamoDBContext, DynamoDBContext>()
         .AddScoped<IBookRepository, BookRepository>()
-        .AddScoped<ICompanyRepository, CompanyRepository>();
+        .AddScoped<ICompanyRepository, CompanyRepository>()
+        .AddScoped<IUserRepository, UserRepository>(); // <- ADICIONAR ESTA LINHA
 
 // Add AWS Lambda support
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
@@ -132,7 +133,7 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 
-// Adicionar middleware de autentica��o e autoriza��o
+// Adicionar middleware de autenticação e autorização
 app.UseAuthentication();
 app.UseAuthorization();
 

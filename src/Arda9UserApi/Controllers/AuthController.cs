@@ -30,10 +30,10 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Realiza login do usu�rio no AWS Cognito
     /// </summary>
-    /// <returns>Token de autentica��o</returns>
+    /// <returns>Token de autenticão</returns>
     /// <response code="200">Login realizado com sucesso</response>
-    /// <response code="400">Par�metros inv�lidos</response>
-    /// <response code="401">Credenciais inv�lidas</response>
+    /// <response code="400">Parametros invílidos</response>
+    /// <response code="401">Credenciais invílidas</response>
     [HttpGet]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
