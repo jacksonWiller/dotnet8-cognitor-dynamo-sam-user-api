@@ -1,9 +1,9 @@
 using Arda9UserApi.Application.DTOs;
+using Arda9UserApi.Domain.Entities.UserAggregate;
 using Arda9UserApi.Infrastructure.Repositories;
 using Ardalis.Result;
 using Ardalis.Result.FluentValidation;
 using AutoMapper;
-using Catalog.Domain.Entities.UserAggregate;
 using Catalog.Domain.ValueObjects;
 using FluentValidation;
 using MediatR;

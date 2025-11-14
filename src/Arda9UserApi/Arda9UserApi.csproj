@@ -33,8 +33,4 @@
     <InternalsVisibleTo Include="ServerlessAPI.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Application\Services\" />
-  </ItemGroup>
-
 </Project>

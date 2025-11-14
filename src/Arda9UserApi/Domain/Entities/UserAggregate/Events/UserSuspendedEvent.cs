@@ -1,6 +1,6 @@
 using Arda9UserApi.Core;
 
-namespace Catalog.Domain.Entities.UserAggregate.Events;
+namespace Arda9UserApi.Domain.Entities.UserAggregate.Events;
 
 public class UserSuspendedEvent : BaseEvent
 {

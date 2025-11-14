@@ -3,6 +3,7 @@ using Amazon.CognitoIdentityProvider;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.SecretsManager;
+using Arda9UserApi.Application.Services;
 using Arda9UserApi.Configuration;
 using Arda9UserApi.Core.Behaviors;
 using Arda9UserApi.Infrastructure.Repositories;
@@ -115,7 +116,8 @@ builder.Services
         .AddSingleton<IAmazonCognitoIdentityProvider>(new AmazonCognitoIdentityProviderClient(RegionEndpoint.GetBySystemName(awsRegion)))
         .AddSingleton<IAmazonSecretsManager>(new AmazonSecretsManagerClient(RegionEndpoint.GetBySystemName(awsRegion)))
         .AddScoped<IDynamoDBContext, DynamoDBContext>()
-        .AddScoped<IUserRepository, UserRepository>();
+        .AddScoped<IUserRepository, UserRepository>()
+        .AddScoped<IAuthService, AuthService>();
 
 // Add AWS Lambda support
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
@@ -136,7 +138,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.Run();
