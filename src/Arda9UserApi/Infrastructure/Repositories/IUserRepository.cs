@@ -1,4 +1,4 @@
-using Catalog.Domain.Entities.UserAggregate;
+using Arda9UserApi.Domain.Entities.UserAggregate;
 
 namespace Arda9UserApi.Infrastructure.Repositories;
 

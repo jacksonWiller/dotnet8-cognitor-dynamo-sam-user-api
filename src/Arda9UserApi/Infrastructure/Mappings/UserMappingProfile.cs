@@ -1,6 +1,6 @@
 using Arda9UserApi.Application.DTOs;
+using Arda9UserApi.Domain.Entities.UserAggregate;
 using AutoMapper;
-using Catalog.Domain.Entities.UserAggregate;
 using Catalog.Domain.ValueObjects;
 
 namespace Arda9UserApi.Infrastructure.Mappings;

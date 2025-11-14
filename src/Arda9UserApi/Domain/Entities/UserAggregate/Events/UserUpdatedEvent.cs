@@ -1,5 +1,4 @@
 using Arda9UserApi.Core;
-using Catalog.Domain.Entities.UserAggregate;
 
 namespace Arda9UserApi.Domain.Entities.UserAggregate.Events;
 

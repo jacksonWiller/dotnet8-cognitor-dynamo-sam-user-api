@@ -5,7 +5,7 @@ using Catalog.Domain.Entities.UserAggregate.Events;
 using Catalog.Domain.Enums;
 using Catalog.Domain.ValueObjects;
 
-namespace Catalog.Domain.Entities.UserAggregate;
+namespace Arda9UserApi.Domain.Entities.UserAggregate;
 
 public class User : BaseEntity, IAggregateRoot
 {
@@ -99,7 +99,7 @@ public class User : BaseEntity, IAggregateRoot
     public void AssignRole(Guid roleId, Guid? updatedBy = null)
     {
         if (roleId == Guid.Empty)
-            throw new ArgumentException("RoleId cannot be empty", nameof(roleId));
+            throw new ArgumentException("RoleId cannot be empty", nameof(roleId)); 
 
         if (Roles.Contains(roleId))
             return; // Already has this role

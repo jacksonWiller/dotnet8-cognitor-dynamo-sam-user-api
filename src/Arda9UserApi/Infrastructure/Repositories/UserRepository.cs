@@ -1,8 +1,8 @@
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using Arda9UserApi.Application.DTOs;
+using Arda9UserApi.Domain.Entities.UserAggregate;
 using AutoMapper;
-using Catalog.Domain.Entities.UserAggregate;
 
 namespace Arda9UserApi.Infrastructure.Repositories;
 
