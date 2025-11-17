@@ -35,11 +35,11 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<Creat
     public async Task<Result<CreateUserResponse>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
         // Validar o comando
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            return Result<CreateUserResponse>.Invalid(validationResult.AsErrors());
-        }
+        //var validationResult = await _validator.ValidateAsync(request, cancellationToken);
+        //if (!validationResult.IsValid)
+        //{
+        //    return Result<CreateUserResponse>.Invalid(validationResult.AsErrors());
+        //}
 
         try
         {
@@ -53,7 +53,7 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<Creat
 
             // Obter o userId do usuário autenticado (se disponível)
             Guid? createdBy = request.CreatedBy;
-            if (createdBy == null)
+            if (createdBy != null)
             {
                 var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value;
                 if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
