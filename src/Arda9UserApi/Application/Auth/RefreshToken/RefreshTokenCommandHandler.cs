@@ -21,7 +21,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
     {
         try
         {
-            var response = await authService.RefreshTokenAsync(request.RefreshToken);
+            var response = await authService.RefreshTokenAsync(request.TenantId, request.Email, request.RefreshToken);
 
             return Result.Success(new RefreshTokenResponse
             {
@@ -36,9 +36,21 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         {
             return ResultError.Error("Refresh token inválido ou expirado");
         }
+        catch (UserNotFoundException)
+        {
+            return ResultError.Error("Usuário não encontrado neste tenant");
+        }
+        catch (InvalidParameterException ex)
+        {
+            return ResultError.Error($"Parâmetros inválidos: {ex.Message}");
+        }
+        catch (TooManyRequestsException)
+        {
+            return ResultError.Error("Muitas tentativas. Tente novamente mais tarde");
+        }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error refreshing token");
+            logger.LogError(ex, "Error refreshing token for user {Email} in tenant {TenantId}", request.Email, request.TenantId);
             return ResultError.Error("Erro ao renovar token");
         }
     }

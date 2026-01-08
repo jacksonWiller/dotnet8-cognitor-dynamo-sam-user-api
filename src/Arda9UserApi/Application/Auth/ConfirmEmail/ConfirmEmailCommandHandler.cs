@@ -21,7 +21,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
     {
         try
         {
-            await authService.ConfirmSignUpAsync(request.Email, request.Code);
+            await authService.ConfirmSignUpAsync(request.TenantId, request.Email, request.Code);
 
             return Result.Success(new ConfirmEmailResponse
             {
@@ -37,9 +37,17 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
         {
             return ResultError.Error("Código de confirmação expirado");
         }
+        catch (UserNotFoundException)
+        {
+            return ResultError.Error("Usuário não encontrado neste tenant");
+        }
+        catch (NotAuthorizedException)
+        {
+            return ResultError.Error("Não autorizado a confirmar este usuário");
+        }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error confirming email for user {Email}", request.Email);
+            logger.LogError(ex, "Error confirming email for user {Email} in tenant {TenantId}", request.Email, request.TenantId);
             return ResultError.Error("Erro ao confirmar email");
         }
     }

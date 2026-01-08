@@ -10,23 +10,20 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
 {
     private readonly IAuthService authService;
     private readonly ILogger<LoginCommandHandler> logger;
-    private readonly IHttpContextAccessor httpContextAccessor;
 
     public LoginCommandHandler(
         IAuthService authService, 
-        ILogger<LoginCommandHandler> logger,
-        IHttpContextAccessor httpContextAccessor)
+        ILogger<LoginCommandHandler> logger)
     {
         this.authService = authService;
         this.logger = logger;
-        this.httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            var authResponse = await authService.LoginAsync(request.Email, request.Password);
+            var authResponse = await authService.LoginAsync(request.TenantId, request.Email, request.Password);
 
             return Result.Success(new LoginResponse
             {
@@ -46,13 +43,21 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
         {
             return ResultError.Error("Usuário não confirmado. Verifique seu email.");
         }
+        catch (UserNotFoundException)
+        {
+            return ResultError.Error("Email ou senha incorretos");
+        }
         catch (InvalidParameterException ex)
         {
             return ResultError.Error($"Parâmetros inválidos: {ex.Message}");
         }
+        catch (TooManyRequestsException)
+        {
+            return ResultError.Error("Muitas tentativas de login. Tente novamente mais tarde");
+        }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error logging in user {Email}", request.Email);
+            logger.LogError(ex, "Error logging in user {Email} in tenant {TenantId}", request.Email, request.TenantId);
             return ResultError.Error("Erro ao realizar login");
         }
     }

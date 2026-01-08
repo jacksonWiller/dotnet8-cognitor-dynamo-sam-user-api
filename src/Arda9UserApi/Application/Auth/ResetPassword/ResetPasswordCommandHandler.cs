@@ -21,7 +21,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
     {
         try
         {
-            await authService.ConfirmForgotPasswordAsync(request.Email, request.Code, request.NewPassword);
+            await authService.ConfirmForgotPasswordAsync(request.TenantId, request.Email, request.Code, request.NewPassword);
 
             return Result.Success(new ResetPasswordResponse
             {
@@ -41,9 +41,21 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
         {
             return ResultError.Error($"Senha inválida: {ex.Message}");
         }
+        catch (UserNotFoundException)
+        {
+            return ResultError.Error("Usuário não encontrado neste tenant");
+        }
+        catch (InvalidParameterException ex)
+        {
+            return ResultError.Error($"Parâmetros inválidos: {ex.Message}");
+        }
+        catch (LimitExceededException)
+        {
+            return ResultError.Error("Limite de tentativas excedido. Tente novamente mais tarde");
+        }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error resetting password for {Email}", request.Email);
+            logger.LogError(ex, "Error resetting password for {Email} in tenant {TenantId}", request.Email, request.TenantId);
             return ResultError.Error("Erro ao redefinir senha");
         }
     }

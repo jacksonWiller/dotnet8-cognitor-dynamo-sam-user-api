@@ -1,5 +1,6 @@
 using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
+using Arda9UserApi.Application.Helpers;
 using Arda9UserApi.Configuration;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
@@ -10,13 +11,13 @@ namespace Arda9UserApi.Application.Services;
 public interface IAuthService
 {
     string ComputeSecretHash(string username);
-    Task<SignUpResponse> RegisterUserAsync(string email, string password, string name, string? phoneNumber);
-    Task ConfirmSignUpAsync(string email, string code);
-    Task ResendConfirmationCodeAsync(string email);
-    Task<InitiateAuthResponse> LoginAsync(string email, string password);
-    Task<InitiateAuthResponse> RefreshTokenAsync(string refreshToken);
-    Task SendForgotPasswordCodeAsync(string email);
-    Task ConfirmForgotPasswordAsync(string email, string code, string newPassword);
+    Task<SignUpResponse> RegisterUserAsync(Guid tenantId, string email, string password, string name, string? phoneNumber);
+    Task ConfirmSignUpAsync(Guid tenantId, string email, string code);
+    Task ResendConfirmationCodeAsync(Guid tenantId, string email);
+    Task<InitiateAuthResponse> LoginAsync(Guid tenantId, string email, string password);
+    Task<InitiateAuthResponse> RefreshTokenAsync(Guid tenantId, string email, string refreshToken);
+    Task SendForgotPasswordCodeAsync(Guid tenantId, string email);
+    Task ConfirmForgotPasswordAsync(Guid tenantId, string email, string code, string newPassword);
     Task ChangePasswordAsync(string accessToken, string oldPassword, string newPassword);
     Task GlobalSignOutAsync(string accessToken);
     Task<GetUserResponse> GetUserAsync(string accessToken);
@@ -49,20 +50,23 @@ public class AuthService : IAuthService
         return Convert.ToBase64String(hash);
     }
 
-    public async Task<SignUpResponse> RegisterUserAsync(string email, string password, string name, string? phoneNumber)
+    public async Task<SignUpResponse> RegisterUserAsync(Guid tenantId, string email, string password, string name, string? phoneNumber)
     {
-        var secretHash = ComputeSecretHash(email);
+        var username = CognitoUsername.Build(tenantId, email);
+        var secretHash = ComputeSecretHash(username);
+        var normalizedEmail = email.Trim().ToLowerInvariant();
 
         var signUpRequest = new SignUpRequest
         {
             ClientId = cognitoConfig.ClientId,
             SecretHash = secretHash,
-            Username = email,
+            Username = username,
             Password = password,
             UserAttributes = new List<AttributeType>
             {
-                new() { Name = "email", Value = email },
-                new() { Name = "name", Value = name }
+                new() { Name = "email", Value = normalizedEmail },
+                new() { Name = "name", Value = name },
+                new() { Name = "custom:tenantId", Value = tenantId.ToString() }
             }
         };
 
@@ -76,45 +80,49 @@ public class AuthService : IAuthService
         }
 
         var response = await cognitoClient.SignUpAsync(signUpRequest);
-        logger.LogInformation("User {Email} registered successfully with UserSub {UserSub}", email, response.UserSub);
+        logger.LogInformation("User {Username} registered successfully in tenant {TenantId} with UserSub {UserSub}", 
+            username, tenantId, response.UserSub);
         
         return response;
     }
 
-    public async Task ConfirmSignUpAsync(string email, string code)
+    public async Task ConfirmSignUpAsync(Guid tenantId, string email, string code)
     {
-        var secretHash = ComputeSecretHash(email);
+        var username = CognitoUsername.Build(tenantId, email);
+        var secretHash = ComputeSecretHash(username);
 
         var confirmRequest = new ConfirmSignUpRequest
         {
             ClientId = cognitoConfig.ClientId,
             SecretHash = secretHash,
-            Username = email,
+            Username = username,
             ConfirmationCode = code
         };
 
         await cognitoClient.ConfirmSignUpAsync(confirmRequest);
-        logger.LogInformation("User {Email} confirmed successfully", email);
+        logger.LogInformation("User {Username} confirmed successfully", username);
     }
 
-    public async Task ResendConfirmationCodeAsync(string email)
+    public async Task ResendConfirmationCodeAsync(Guid tenantId, string email)
     {
-        var secretHash = ComputeSecretHash(email);
+        var username = CognitoUsername.Build(tenantId, email);
+        var secretHash = ComputeSecretHash(username);
 
         var resendRequest = new ResendConfirmationCodeRequest
         {
             ClientId = cognitoConfig.ClientId,
             SecretHash = secretHash,
-            Username = email
+            Username = username
         };
 
         await cognitoClient.ResendConfirmationCodeAsync(resendRequest);
-        logger.LogInformation("Confirmation code resent to {Email}", email);
+        logger.LogInformation("Confirmation code resent to {Username}", username);
     }
 
-    public async Task<InitiateAuthResponse> LoginAsync(string email, string password)
+    public async Task<InitiateAuthResponse> LoginAsync(Guid tenantId, string email, string password)
     {
-        var secretHash = ComputeSecretHash(email);
+        var username = CognitoUsername.Build(tenantId, email);
+        var secretHash = ComputeSecretHash(username);
 
         var authRequest = new InitiateAuthRequest
         {
@@ -122,21 +130,22 @@ public class AuthService : IAuthService
             AuthFlow = AuthFlowType.USER_PASSWORD_AUTH,
             AuthParameters = new Dictionary<string, string>
             {
-                ["USERNAME"] = email,
+                ["USERNAME"] = username,
                 ["PASSWORD"] = password,
                 ["SECRET_HASH"] = secretHash
             }
         };
 
         var response = await cognitoClient.InitiateAuthAsync(authRequest);
-        logger.LogInformation("User {Email} logged in successfully", email);
+        logger.LogInformation("User {Username} logged in successfully", username);
         
         return response;
     }
 
-    public async Task<InitiateAuthResponse> RefreshTokenAsync(string refreshToken)
+    public async Task<InitiateAuthResponse> RefreshTokenAsync(Guid tenantId, string email, string refreshToken)
     {
-        var secretHash = ComputeSecretHash(string.Empty);
+        var username = CognitoUsername.Build(tenantId, email);
+        var secretHash = ComputeSecretHash(username);
 
         var refreshRequest = new InitiateAuthRequest
         {
@@ -145,46 +154,49 @@ public class AuthService : IAuthService
             AuthParameters = new Dictionary<string, string>
             {
                 ["REFRESH_TOKEN"] = refreshToken,
+                ["USERNAME"] = username,
                 ["SECRET_HASH"] = secretHash
             }
         };
 
         var response = await cognitoClient.InitiateAuthAsync(refreshRequest);
-        logger.LogInformation("Token refreshed successfully");
+        logger.LogInformation("Token refreshed successfully for {Username}", username);
         
         return response;
     }
 
-    public async Task SendForgotPasswordCodeAsync(string email)
+    public async Task SendForgotPasswordCodeAsync(Guid tenantId, string email)
     {
-        var secretHash = ComputeSecretHash(email);
+        var username = CognitoUsername.Build(tenantId, email);
+        var secretHash = ComputeSecretHash(username);
 
         var forgotRequest = new ForgotPasswordRequest
         {
             ClientId = cognitoConfig.ClientId,
             SecretHash = secretHash,
-            Username = email
+            Username = username
         };
 
         await cognitoClient.ForgotPasswordAsync(forgotRequest);
-        logger.LogInformation("Password reset code sent to {Email}", email);
+        logger.LogInformation("Password reset code sent to {Username}", username);
     }
 
-    public async Task ConfirmForgotPasswordAsync(string email, string code, string newPassword)
+    public async Task ConfirmForgotPasswordAsync(Guid tenantId, string email, string code, string newPassword)
     {
-        var secretHash = ComputeSecretHash(email);
+        var username = CognitoUsername.Build(tenantId, email);
+        var secretHash = ComputeSecretHash(username);
 
         var confirmRequest = new ConfirmForgotPasswordRequest
         {
             ClientId = cognitoConfig.ClientId,
             SecretHash = secretHash,
-            Username = email,
+            Username = username,
             ConfirmationCode = code,
             Password = newPassword
         };
 
         await cognitoClient.ConfirmForgotPasswordAsync(confirmRequest);
-        logger.LogInformation("Password reset successfully for {Email}", email);
+        logger.LogInformation("Password reset successfully for {Username}", username);
     }
 
     public async Task ChangePasswordAsync(string accessToken, string oldPassword, string newPassword)

@@ -21,7 +21,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     {
         try
         {
-            await authService.SendForgotPasswordCodeAsync(request.Email);
+            await authService.SendForgotPasswordCodeAsync(request.TenantId, request.Email);
 
             return Result.Success(new ForgotPasswordResponse
             {
@@ -38,9 +38,14 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
                 Message = "Se o email existir, você receberá um código de recuperação"
             });
         }
+        catch (InvalidParameterException ex)
+        {
+            logger.LogError(ex, "Invalid parameter sending password reset code to {Email} in tenant {TenantId}", request.Email, request.TenantId);
+            return ResultError.Error("Parâmetros inválidos");
+        }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error sending password reset code to {Email}", request.Email);
+            logger.LogError(ex, "Error sending password reset code to {Email} in tenant {TenantId}", request.Email, request.TenantId);
             return ResultError.Error("Erro ao enviar código de recuperação");
         }
     }

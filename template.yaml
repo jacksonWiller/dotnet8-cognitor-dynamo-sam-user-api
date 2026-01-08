@@ -9,21 +9,145 @@ Globals:
     Timeout: 100
 
 Resources:
-  NetCodeWebAPIServerless:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  # Cognito User Pool
+  Arda9UserPool:
+    Type: AWS::Cognito::UserPool
     Properties:
-      Description: A simple example includes a .NET Core WebAPI App with DynamoDB table.
+      UserPoolName: arda9-user-pool
+      # Username configuration - IMPORTANTE: usar Username, NÃO Email
+      UsernameAttributes: []
+      UsernameConfiguration:
+        CaseSensitive: false
+      
+      # Attributes obrigatórios
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: name
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        # Custom attribute para TenantId
+        - Name: tenantId
+          AttributeDataType: String
+          Mutable: true
+      
+      # Políticas de senha
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+      
+      # Configuração de email
+      AutoVerifiedAttributes:
+        - email
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
+      
+      # Configurações de verificação
+      EmailVerificationMessage: 'Seu código de verificação é {####}'
+      EmailVerificationSubject: 'Código de Verificação - Arda9'
+      
+      # Account recovery
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      
+      # MFA configuration
+      MfaConfiguration: OPTIONAL
+      EnabledMfas:
+        - SOFTWARE_TOKEN_MFA
+      
+      # User pool add-ons
+      UserPoolAddOns:
+        AdvancedSecurityMode: AUDIT
+      
+      # Deletion protection
+      DeletionProtection: ACTIVE
+
+  # Cognito User Pool Client
+  Arda9UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: arda9-user-pool-client
+      UserPoolId: !Ref Arda9UserPool
+      GenerateSecret: true
+      
+      # Explicit auth flows
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      
+      # Token validity
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+      
+      # Prevent user existence errors
+      PreventUserExistenceErrors: ENABLED
+      
+      # Read/Write attributes
+      ReadAttributes:
+        - email
+        - email_verified
+        - name
+        - custom:tenantId
+      WriteAttributes:
+        - email
+        - name
+        - custom:tenantId
+
+  # Cognito User Pool Domain (opcional, para Hosted UI)
+  Arda9UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub 'arda9-${AWS::AccountId}'
+      UserPoolId: !Ref Arda9UserPool
+
+  # Lambda Function
+  NetCodeWebAPIServerless:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: A simple example includes a .NET Core WebAPI App with DynamoDB table and Cognito.
       CodeUri: ./src/Arda9UserApi/
       Handler: Arda9UserApi
       Runtime: dotnet8
       MemorySize: 1024
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+      Environment:
         Variables:
           SAMPLE_TABLE: !Ref SampleTable
+          # Cognito environment variables
+          AwsCognito__UserPoolId: !Ref Arda9UserPool
+          AwsCognito__ClientId: !Ref Arda9UserPoolClient
+          AwsCognito__Region: !Ref AWS::Region
       Policies:
         # Give Create/Read/Update/Delete Permissions to the SampleTable
         - DynamoDBCrudPolicy:
             TableName: !Ref SampleTable
+        # Cognito permissions
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:AdminGetUser
+                - cognito-idp:AdminCreateUser
+                - cognito-idp:AdminSetUserPassword
+                - cognito-idp:AdminUpdateUserAttributes
+                - cognito-idp:AdminDeleteUser
+                - cognito-idp:ListUsers
+              Resource: !GetAtt Arda9UserPool.Arn
       Events:
         ProxyResource:
           Type: HttpApi
@@ -32,13 +156,13 @@ Resources:
             Path: /{proxy+}
             Method: ANY
         RootResource:
-          PayloadFormatVersion: "2.0"
           Type: HttpApi
           Properties:
+            PayloadFormatVersion: "2.0"
             Path: /
             Method: ANY
 
-  # DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}
+  # DynamoDB table to store item: {id: <ID>, name: <NAME>}
   SampleTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -50,7 +174,40 @@ Resources:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
 
+  # Parameter Store para armazenar o Client Secret
+  CognitoClientSecretParameter:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: /arda9/cognito/client-secret
+      Description: Cognito User Pool Client Secret
+      SecretString: !Sub |
+        {
+          "ClientSecret": "${Arda9UserPoolClient.ClientSecret}"
+        }
+
 Outputs:
   WebEndpoint:
     Description: "API Gateway endpoint URL"
     Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  
+  UserPoolId:
+    Description: "Cognito User Pool ID"
+    Value: !Ref Arda9UserPool
+    Export:
+      Name: !Sub "${AWS::StackName}-UserPoolId"
+  
+  UserPoolClientId:
+    Description: "Cognito User Pool Client ID"
+    Value: !Ref Arda9UserPoolClient
+    Export:
+      Name: !Sub "${AWS::StackName}-UserPoolClientId"
+  
+  UserPoolArn:
+    Description: "Cognito User Pool ARN"
+    Value: !GetAtt Arda9UserPool.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-UserPoolArn"
+  
+  CognitoClientSecretArn:
+    Description: "ARN do Secret com o Client Secret do Cognito"
+    Value: !Ref CognitoClientSecretParameter

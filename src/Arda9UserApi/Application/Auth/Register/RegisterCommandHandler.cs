@@ -22,6 +22,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Re
         try
         {
             var response = await authService.RegisterUserAsync(
+                request.TenantId,
                 request.Email,
                 request.Password,
                 request.Name,
@@ -38,7 +39,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Re
         }
         catch (UsernameExistsException)
         {
-            return ResultError.Error("Este email já está em uso");
+            return ResultError.Error("Este email já está em uso neste tenant");
         }
         catch (InvalidPasswordException ex)
         {
@@ -50,7 +51,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Re
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error registering user {Email}", request.Email);
+            logger.LogError(ex, "Error registering user {Email} in tenant {TenantId}", request.Email, request.TenantId);
             return ResultError.Error("Erro ao registrar usuário");
         }
     }
