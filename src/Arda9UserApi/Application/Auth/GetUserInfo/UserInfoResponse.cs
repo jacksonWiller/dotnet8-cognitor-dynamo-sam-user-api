@@ -8,4 +8,5 @@ public class UserInfoResponse
     public string? PhoneNumber { get; set; }
     public bool EmailVerified { get; set; }
     public string Sub { get; set; } = string.Empty;
+    public Guid TenantId { get; set; }
 }

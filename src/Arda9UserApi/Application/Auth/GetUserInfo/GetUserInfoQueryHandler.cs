@@ -29,7 +29,8 @@ public class GetUserInfoQueryHandler : IRequestHandler<GetUserInfoQuery, Result<
                 Name = response.UserAttributes.FirstOrDefault(a => a.Name == "name")?.Value ?? string.Empty,
                 PhoneNumber = response.UserAttributes.FirstOrDefault(a => a.Name == "phone_number")?.Value,
                 EmailVerified = bool.Parse(response.UserAttributes.FirstOrDefault(a => a.Name == "email_verified")?.Value ?? "false"),
-                Sub = response.UserAttributes.FirstOrDefault(a => a.Name == "sub")?.Value ?? string.Empty
+                Sub = response.UserAttributes.FirstOrDefault(a => a.Name == "sub")?.Value ?? string.Empty,
+                TenantId = Guid.Parse(response.Username.Split('#')[0])
             };
 
             return Result.Success(userInfo);

@@ -28,6 +28,7 @@ public class UsersController : ControllerBase
     /// Obtém uma lista de usuários de uma empresa com limite especificado
     /// </summary>
     [HttpGet]
+    [Authorize]
     [ProducesResponseType(typeof(GetUsersByCompanyQueryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Get(Guid companyId, [FromQuery] int limit = 10)
