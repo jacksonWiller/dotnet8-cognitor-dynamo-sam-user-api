@@ -78,10 +78,11 @@ builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { 
-        Title = "Books API", 
+    c.SwaggerDoc("v1", new()
+    {
+        Title = "User API",
         Version = "v1",
-        Description = "API para gerenciamento de livros usando AWS Lambda e DynamoDB com CQRS customizado"
+        Description = "API para gerenciamento de usuários usando AWS Lambda, Cognito e DynamoDB com CQRS customizado"
     });
 
     // Configuração para autenticação JWT no Swagger
