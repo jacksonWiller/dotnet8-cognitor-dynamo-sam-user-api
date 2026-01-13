@@ -65,8 +65,7 @@ public class AuthService : IAuthService
             UserAttributes = new List<AttributeType>
             {
                 new() { Name = "email", Value = normalizedEmail },
-                new() { Name = "name", Value = name },
-                new() { Name = "custom:tenantId", Value = tenantId.ToString() }
+                new() { Name = "name", Value = name }
             }
         };
 

@@ -7,7 +7,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "AWS_REGION": "us-east-1"
       },
-      "applicationUrl": "https://localhost:50364;http://localhost:50365"
+      "applicationUrl": "https://localhost:60364;http://localhost:60365"
     },
     "Mock Lambda Test Tool": {
       "commandName": "Executable",
