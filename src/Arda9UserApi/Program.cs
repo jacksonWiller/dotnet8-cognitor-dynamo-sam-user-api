@@ -78,9 +78,8 @@ builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new()
-    {
-        Title = "User API",
+    c.SwaggerDoc("v1", new() { 
+        Title = "User API", 
         Version = "v1",
         Description = "API para gerenciamento de usuários usando AWS Lambda, Cognito e DynamoDB com CQRS customizado"
     });
@@ -128,7 +127,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Books API v1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "User API v1");
     c.RoutePrefix = string.Empty; // Define o Swagger como página inicial
 });
 
